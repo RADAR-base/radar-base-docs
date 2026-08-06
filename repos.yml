@@ -1,0 +1,53 @@
+# Registry of RADAR-base repositories whose documentation is published on this site.
+#
+# This file decides WHICH repositories are included and WHERE they live on the site.
+# Everything about the *content* of a project's documentation (page order, grouping,
+# titles, which files are published) is owned by that project's own repository, in a
+# `docs/radar-docs.yml` manifest. See templates/radar-docs.yml.
+#
+# To add a project: append an entry here, and add a `docs/` folder to that repository.
+
+site:
+  organization: RADAR-base
+
+# Defaults applied to every repo entry below; each entry can override any of them.
+defaults:
+  branch: main
+  docsPath: docs
+  versions:
+    # tags -> publish a versioned copy of the docs for each matching git tag.
+    # none -> publish only the current branch.
+    mode: tags
+    # Only tags matching this regex become documentation versions.
+    pattern: '^v?\d+\.\d+\.\d+$'
+    # How many of the most recent versions to keep on the site (newest first).
+    max: 4
+    # Label used for the docs built from `branch` (the unreleased/current docs).
+    currentLabel: Next
+    # When true, the newest tag is what visitors see at the bare route URL, and
+    # `branch` docs live under /next/. When false, `branch` docs are the default.
+    releasedIsDefault: true
+
+repos:
+  - id: radarpipeline
+    label: RADAR Pipeline
+    repo: RADAR-base/radarpipeline
+    route: /pipeline
+    description: Python package to ingest, analyse and export RADAR-base data.
+
+  # --- Add further projects below. Minimal entry:
+  #
+  # - id: managementportal
+  #   label: Management Portal
+  #   repo: RADAR-base/ManagementPortal
+  #   route: /management-portal
+  #   description: Study and participant management for RADAR-base.
+  #
+  # A project that does not tag releases, or whose docs should always track main:
+  #
+  # - id: radar-kubernetes
+  #   label: RADAR Kubernetes
+  #   repo: RADAR-base/RADAR-Kubernetes
+  #   route: /kubernetes
+  #   versions:
+  #     mode: none

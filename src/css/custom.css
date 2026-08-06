@@ -1,0 +1,93 @@
+/**
+ * Site-wide styling. RADAR-base blue, tuned for contrast in both colour modes.
+ */
+
+:root {
+  --ifm-color-primary: #1a5fb4;
+  --ifm-color-primary-dark: #17559f;
+  --ifm-color-primary-darker: #165096;
+  --ifm-color-primary-darkest: #12427c;
+  --ifm-color-primary-light: #1d69c9;
+  --ifm-color-primary-lighter: #1e6ed2;
+  --ifm-color-primary-lightest: #2a7ce4;
+  --ifm-code-font-size: 92%;
+  --docusaurus-highlighted-code-line-bg: rgba(0, 0, 0, 0.08);
+}
+
+[data-theme='dark'] {
+  --ifm-color-primary: #7cb0f0;
+  --ifm-color-primary-dark: #5c9beb;
+  --ifm-color-primary-light: #9cc5f5;
+  --docusaurus-highlighted-code-line-bg: rgba(255, 255, 255, 0.12);
+}
+
+.hero--radar {
+  background: linear-gradient(135deg, #12427c 0%, #1a5fb4 55%, #2a7ce4 100%);
+  color: #fff;
+  padding: 4rem 0 3.5rem;
+}
+
+.hero--radar .hero__subtitle {
+  max-width: 44rem;
+  margin: 0 auto;
+  opacity: 0.92;
+}
+
+.projectGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(17rem, 1fr));
+  gap: 1.25rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.projectCard {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  padding: 1.25rem;
+  border: 1px solid var(--ifm-color-emphasis-300);
+  border-radius: var(--ifm-global-radius);
+  background: var(--ifm-card-background-color);
+  transition: border-color 0.2s ease, transform 0.2s ease;
+}
+
+.projectCard:hover {
+  border-color: var(--ifm-color-primary);
+  transform: translateY(-2px);
+  text-decoration: none;
+}
+
+.projectCard__title {
+  margin: 0 0 0.4rem;
+  font-size: 1.15rem;
+}
+
+.projectCard__description {
+  flex: 1;
+  margin: 0 0 1rem;
+  color: var(--ifm-color-emphasis-700);
+  font-size: 0.94rem;
+}
+
+.projectCard__meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  font-size: 0.78rem;
+  color: var(--ifm-color-emphasis-600);
+}
+
+.projectCard__badge {
+  padding: 0.1rem 0.5rem;
+  border-radius: 999px;
+  background: var(--ifm-color-emphasis-200);
+}
+
+.emptyState {
+  padding: 1.25rem;
+  border: 1px dashed var(--ifm-color-emphasis-400);
+  border-radius: var(--ifm-global-radius);
+  color: var(--ifm-color-emphasis-700);
+}

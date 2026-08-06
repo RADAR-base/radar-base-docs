@@ -1,0 +1,81 @@
+name: Build and deploy documentation
+
+# The site is rebuilt from scratch on every run, pulling the current documentation from
+# each repository in repos.yml. It therefore updates when:
+#   - this repository changes (new project added, platform docs edited)
+#   - a project repository tells us it released or changed its docs (repository_dispatch)
+#   - the nightly schedule runs, as a backstop for repositories that do not notify us
+#   - someone triggers it by hand
+on:
+  push:
+    branches: [main]
+  repository_dispatch:
+    types: [docs-update]
+  schedule:
+    - cron: '0 4 * * *'
+  workflow_dispatch:
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# Never let two deployments race; let a newer commit cancel an in-flight build.
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Report what triggered this build
+        if: github.event_name == 'repository_dispatch'
+        run: |
+          echo "Triggered by ${{ github.event.client_payload.repository }}" \
+               "(${{ github.event.client_payload.ref || 'unspecified ref' }})"
+
+      - run: npm ci
+
+      # Fetching is cached per release tag; tags are immutable so they are only ever
+      # downloaded once, and branch documentation is always re-fetched.
+      - name: Cache fetched release documentation
+        uses: actions/cache@v4
+        with:
+          path: .cache/git
+          key: radar-docs-git-${{ hashFiles('repos.yml') }}-${{ github.run_id }}
+          restore-keys: |
+            radar-docs-git-${{ hashFiles('repos.yml') }}-
+            radar-docs-git-
+
+      # CI=true makes scripts/fetch-docs.mjs fail the build if a listed repository
+      # cannot be fetched, rather than quietly publishing a stale copy.
+      - name: Build site
+        run: npm run build
+        env:
+          CI: true
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: build
+
+  deploy:
+    # Pull requests are built for validation only; nothing is published from them.
+    if: github.event_name != 'pull_request'
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4
