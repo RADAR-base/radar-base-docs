@@ -22,10 +22,12 @@ permissions:
   pages: write
   id-token: write
 
-# Never let two deployments race; let a newer commit cancel an in-flight build.
+# Deployments are serialised and never cancelled, so a half-finished deploy cannot
+# leave the site in a broken state. Pull request builds only validate, so they get
+# their own group per branch and a newer push supersedes an in-flight run.
 concurrency:
-  group: pages
-  cancel-in-progress: false
+  group: ${{ github.event_name == 'pull_request' && format('docs-pr-{0}', github.ref) || 'pages' }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:
   build:
