@@ -9,7 +9,7 @@ import {docIdFor, slugifyPath} from './markdown.mjs';
  * filename. Anything published but not listed is appended, so adding a file to a repo
  * never makes it invisible.
  */
-export function buildSidebar({manifestSidebar, docs}) {
+export function buildSidebar({manifestSidebar, docs, pinned = []}) {
   const byKey = new Map();
   for (const doc of docs) {
     for (const key of [doc.relPath, doc.slugPath, doc.docId, path.posix.basename(doc.relPath)]) {
@@ -59,9 +59,15 @@ export function buildSidebar({manifestSidebar, docs}) {
     });
 
   const listed = Array.isArray(manifestSidebar) ? convert(manifestSidebar) : [];
+
+  // Pages the manifest did not mention are appended alphabetically, except for any
+  // the caller pinned — the auto-published README belongs at the top, not under "o".
   const remaining = docs
     .filter((doc) => !used.has(doc.docId))
-    .sort((a, b) => a.docId.localeCompare(b.docId))
+    .sort((a, b) => {
+      const rank = (doc) => (pinned.includes(doc.docId) ? pinned.indexOf(doc.docId) : pinned.length);
+      return rank(a) - rank(b) || a.docId.localeCompare(b.docId);
+    })
     .map((doc) => doc.docId);
 
   const items = [...listed, ...remaining];

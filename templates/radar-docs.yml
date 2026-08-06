@@ -19,6 +19,12 @@ description: Python package to ingest, analyse and export RADAR-base data.
 # Defaults to the first page in `sidebar`, or the alphabetically first page.
 homepage: Introduction.md
 
+# Your README is published as a page titled "Overview" unless you say otherwise, and
+# it is the whole of your documentation if this repository has no docs folder yet.
+# Set `readme: false` to leave it out, or give a path to publish a different file.
+# To choose its title or where it sits, list it under `extraDocs` below instead.
+readme: README.md
+
 # Glob patterns (relative to the docs folder) that should NOT be published.
 exclude:
   - internal/**

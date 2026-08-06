@@ -14,6 +14,11 @@ site:
 defaults:
   branch: main
   docsPath: docs
+  # Publish the repository's README as a page, in addition to anything in docsPath.
+  # This is also the fallback for a repository with no docs folder at all, which is
+  # then published as a single page. A project can opt out with `readme: false` in
+  # its own manifest.
+  includeReadme: true
   versions:
     # tags -> publish a versioned copy of the docs for each matching git tag.
     # none -> publish only the current branch.
@@ -37,17 +42,17 @@ repos:
 
   # --- Add further projects below. Minimal entry:
   #
-  # - id: managementportal
-  #   label: Management Portal
-  #   repo: RADAR-base/ManagementPortal
-  #   route: /management-portal
-  #   description: Study and participant management for RADAR-base.
+  - id: managementportal
+    label: Management Portal
+    repo: RADAR-base/ManagementPortal
+    branch: master
+    route: /management-portal
+    description: Study and participant management for RADAR-base.
   #
   # A project that does not tag releases, or whose docs should always track main:
   #
-  # - id: radar-kubernetes
-  #   label: RADAR Kubernetes
-  #   repo: RADAR-base/RADAR-Kubernetes
-  #   route: /kubernetes
-  #   versions:
-  #     mode: none
+  - id: radar-kubernetes
+    label: RADAR Kubernetes
+    repo: RADAR-base/RADAR-Kubernetes
+    route: /kubernetes
+    description: Radar-base deployment on Kubernetes.

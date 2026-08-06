@@ -19,6 +19,7 @@ import {buildSidebar} from './lib/sidebar.mjs';
 
 const CACHE_DIR = path.join(SITE_DIR, '.cache');
 const MANIFEST_CANDIDATES = ['radar-docs.yml', 'radar-docs.yaml', '.radar-docs.yml'];
+const README_CANDIDATES = ['README.md', 'README.MD', 'Readme.md', 'readme.md'];
 const ASSET_EXTENSIONS = new Set(['.png', '.jpg', '.jpeg', '.gif', '.svg', '.webp', '.pdf', '.json']);
 
 const args = process.argv.slice(2);
@@ -86,27 +87,89 @@ function readFallbackManifest(repoId) {
 }
 
 /**
+ * Works out whether to publish the repository's README as a page, and under what name.
+ *
+ * Off when the manifest says `readme: false`, or when the manifest already publishes
+ * the same file through `extraDocs`. The target name gives way to the docs folder: a
+ * repository that already has its own `overview.md` keeps it.
+ */
+function resolveReadme({checkoutDir, manifest, repo, extras, sources}) {
+  const setting = manifest.readme ?? repo.includeReadme ?? true;
+  if (setting === false) return null;
+
+  const candidates = typeof setting === 'string' ? [setting] : README_CANDIDATES;
+  const source = candidates.find((name) => fs.existsSync(path.join(checkoutDir, name)));
+  if (!source) {
+    if (typeof setting === 'string') warn(`readme: "${setting}" not found`);
+    return null;
+  }
+
+  // Already published deliberately, with the maintainer's own title and placement.
+  if (extras.some((extra) => extra.source === source)) return null;
+
+  const taken = new Set([
+    ...sources.map((relPath) => slugifyPath(relPath)),
+    ...extras.map((extra) => slugifyPath(extra.relPath)),
+  ]);
+  const target = ['overview.md', 'readme.md', 'project-readme.md'].find((name) => !taken.has(name));
+  if (!target) return null;
+
+  return {source, absolute: path.join(checkoutDir, source), relPath: target, title: 'Overview'};
+}
+
+/**
+ * Chooses the page served at the project's root URL: the manifest's `homepage:`, else
+ * the first page of a manifest-defined sidebar, else a conventionally-named entry
+ * point, else whatever comes first — which is rarely the page to open a project with.
+ */
+function pickHomepage({manifest, sidebar, docs}) {
+  if (manifest.homepage) {
+    const named = docs.find(
+      (doc) =>
+        [doc.relPath, doc.slugPath, doc.docId].includes(manifest.homepage) ||
+        doc.slugPath === slugifyPath(manifest.homepage),
+    );
+    if (named) return named;
+  }
+
+  if (Array.isArray(manifest.sidebar) && typeof sidebar.docs[0] === 'string') {
+    const first = docs.find((doc) => doc.docId === sidebar.docs[0]);
+    if (first) return first;
+  }
+
+  const preferred = ['index', 'introduction', 'intro', 'overview', 'readme', 'getting-started', 'home'];
+  for (const name of preferred) {
+    const match = docs.find((doc) => doc.docId.toLowerCase() === name);
+    if (match) return match;
+  }
+
+  return docs[0];
+}
+
+/**
  * Renders one revision of one repository into `outputDir`, returning the sidebar and
  * the metadata the site needs. `ref` is a branch or tag; `blobRef` is what edit links
  * should point at.
  */
 function renderDocs({checkoutDir, outputDir, repo, manifest, docsPath, ref, editable}) {
   const docsRoot = path.join(checkoutDir, docsPath);
-  if (!fs.existsSync(docsRoot)) {
-    throw new Error(`no "${docsPath}" folder at ${ref}`);
-  }
+  const hasDocsFolder = fs.existsSync(docsRoot);
 
   const excludes = (manifest.exclude ?? []).map(globToRegExp);
   const isExcluded = (relPath) =>
     MANIFEST_CANDIDATES.includes(path.posix.basename(relPath)) ||
     excludes.some((pattern) => pattern.test(relPath));
 
-  const sources = walk(docsRoot)
-    .filter((relPath) => !isExcluded(relPath))
-    .filter((relPath) => isMarkdown(relPath) || ASSET_EXTENSIONS.has(path.extname(relPath).toLowerCase()))
-    .sort();
+  const sources = !hasDocsFolder
+    ? []
+    : walk(docsRoot)
+        .filter((relPath) => !isExcluded(relPath))
+        .filter(
+          (relPath) => isMarkdown(relPath) || ASSET_EXTENSIONS.has(path.extname(relPath).toLowerCase()),
+        )
+        .sort();
 
-  // Files outside the docs folder that the manifest asks to publish (typically README).
+  // Files outside the docs folder that the manifest asks to publish.
   const extras = (manifest.extraDocs ?? [])
     .map((entry) => {
       const source = path.join(checkoutDir, entry.source ?? '');
@@ -117,6 +180,16 @@ function renderDocs({checkoutDir, outputDir, repo, manifest, docsPath, ref, edit
       return {...entry, absolute: source, relPath: entry.target ?? path.posix.basename(entry.source)};
     })
     .filter(Boolean);
+
+  // The README is a project's front page on GitHub, and is very often the only
+  // documentation a repository has, so it is published unless asked not to. A
+  // repository with no docs folder is therefore still publishable.
+  const readme = resolveReadme({checkoutDir, manifest, repo, extras, sources});
+  if (readme) extras.unshift(readme);
+
+  if (!hasDocsFolder && !readme) {
+    throw new Error(`no "${docsPath}" folder and no README at ${ref}`);
+  }
 
   const slugMap = new Map();
   for (const relPath of sources) slugMap.set(relPath, slugifyPath(relPath));
@@ -176,29 +249,22 @@ function renderDocs({checkoutDir, outputDir, repo, manifest, docsPath, ref, edit
 
   if (docs.length === 0) throw new Error(`no publishable markdown at ${ref}`);
 
-  const {sidebar, missing} = buildSidebar({manifestSidebar: manifest.sidebar, docs});
-  for (const entry of missing) warn(`sidebar entry "${entry}" does not match a published page at ${ref}`);
+  const {sidebar, missing} = buildSidebar({
+    manifestSidebar: manifest.sidebar,
+    docs,
+    pinned: readme ? [docIdFor(slugifyPath(readme.relPath))] : [],
+  });
+  // A ref with no docs folder publishes only the README, so every sidebar entry is
+  // trivially missing; warning about each one would bury anything worth reading.
+  if (hasDocsFolder) {
+    for (const entry of missing) {
+      warn(`sidebar entry "${entry}" does not match a published page at ${ref}`);
+    }
+  } else if (missing.length > 0) {
+    warn(`${ref} has no "${docsPath}" folder — published its README only`);
+  }
 
-  // Give the project's landing page the instance root URL. Without an explicit
-  // `homepage:` we prefer a conventionally-named entry point over the first page
-  // alphabetically, which is rarely the one to open a project with.
-  const preferredNames = ['index', 'introduction', 'intro', 'overview', 'readme', 'getting-started', 'home'];
-  const homepageDoc =
-    (manifest.homepage &&
-      docs.find(
-        (doc) =>
-          [doc.relPath, doc.slugPath, doc.docId].includes(manifest.homepage) ||
-          doc.slugPath === slugifyPath(manifest.homepage),
-      )) ||
-    (Array.isArray(manifest.sidebar) && typeof sidebar.docs[0] === 'string'
-      ? docs.find((doc) => doc.docId === sidebar.docs[0])
-      : null) ||
-    preferredNames.reduce(
-      (found, name) => found ?? docs.find((doc) => doc.docId.toLowerCase() === name),
-      null,
-    ) ||
-    docs[0];
-
+  const homepageDoc = pickHomepage({manifest, sidebar, docs});
   if (homepageDoc) {
     const target = path.join(outputDir, homepageDoc.slugPath);
     fs.writeFileSync(target, addFrontMatter(fs.readFileSync(target, 'utf8'), 'slug', '/'));
@@ -222,7 +288,7 @@ async function materializeRef({repo, ref, versionName, staging}) {
       sparsePaths: [
         `/${repo.docsPath}/`,
         ...MANIFEST_CANDIDATES.map((name) => `/${name}`),
-        '/README.md',
+        ...README_CANDIDATES.map((name) => `/${name}`),
         '/CHANGELOG.md',
         '/CONTRIBUTING.md',
       ],

@@ -19,6 +19,11 @@ markdown. Filenames become page URLs, and a page's title comes from its first `#
 No Docusaurus-specific syntax or front matter is required — links to other pages, to files
 elsewhere in your repository, and to images all keep working.
 
+Your `README.md` is published too, as a page titled **Overview**. A repository that has no
+`docs/` folder is still publishable: its README becomes its documentation, a single page,
+and stays that way until there is more to say. Opt out with `readme: false` in the manifest
+described in step 3.
+
 **2. List the repository here.** Add an entry to [`repos.yml`](repos.yml):
 
 ```yaml
@@ -50,9 +55,9 @@ For each repository, the site publishes:
   (by default `v1.2.3`-style tags), newest `max` of them;
 - the documentation from the default branch, labelled **Next**.
 
-Readers land on the newest release. Tags whose documentation does not exist yet — a release
-made before the repository had a `docs/` folder — are skipped with a warning rather than
-failing the build.
+Readers land on the newest release. A tag from before the repository had a `docs/` folder
+still publishes, from the README as it stood at that release, so the version picker does
+not have holes in it.
 
 If a project does not tag releases, set `versions: {mode: none}` on its entry and only the
 branch documentation is published.

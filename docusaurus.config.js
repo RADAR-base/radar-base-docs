@@ -91,7 +91,11 @@ const config = {
   favicon: 'img/favicon.svg',
   organizationName: 'RADAR-base',
   projectName: 'radar-base-docs',
-  trailingSlash: false,
+  // Every route becomes a directory with an index.html. Besides suiting GitHub Pages,
+  // this keeps a docs version that contains a single page (a project whose docs are
+  // just its README) from rendering as a bare .html file with no directory, which the
+  // search indexer cannot write into.
+  trailingSlash: true,
 
   // Aggregated documentation regularly links to files that live outside the site.
   onBrokenLinks: 'warn',

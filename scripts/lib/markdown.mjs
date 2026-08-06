@@ -65,14 +65,25 @@ function humanizeFilename(relPath) {
 }
 
 /**
- * Pulls the leading `# Heading` off the body to use as the page title. Docusaurus
- * renders the front-matter title as the page heading, so leaving the original in
- * place would show it twice.
+ * Reads the leading `# Heading` to use as the page title, leaving it in the body.
+ *
+ * Docusaurus only renders the front-matter title as a heading when the body does not
+ * already open with one, so this does not produce a duplicate — and keeping it means
+ * a page's own table of contents, which links to `#that-heading`, still resolves.
  */
-function extractLeadingHeading(body) {
+function leadingHeading(body) {
   const match = /^\s*#\s+(.+?)\s*$/m.exec(body);
-  if (!match || body.slice(0, match.index).trim() !== '') return {title: null, body};
-  return {title: match[1].trim(), body: body.slice(match.index + match[0].length).replace(/^\r?\n/, '')};
+  if (!match || body.slice(0, match.index).trim() !== '') return null;
+  return match[1].trim();
+}
+
+/** Approximates GitHub's heading-to-anchor rule, enough to recognise self-links. */
+function headingAnchor(heading) {
+  return heading
+    .toLowerCase()
+    .replace(/[^\w\- ]+/g, '')
+    .trim()
+    .replace(/\s+/g, '-');
 }
 
 /**
@@ -91,11 +102,15 @@ function extractLeadingHeading(body) {
  * @param {string} args.sourceDir  Directory of this file relative to the repository root.
  * @param {Map<string, string>} args.slugMap  Docs-relative path -> slugified path.
  */
-function rewriteLinks({body, slugPath, sourceDir, slugMap, blobBaseUrl, docsPathPrefix}) {
+function rewriteLinks({body, slugPath, sourceDir, slugMap, blobBaseUrl, docsPathPrefix, titleAnchor}) {
   const slugFromDir = path.posix.dirname(slugPath);
   const docsPrefix = docsPathPrefix.replace(/\/+$/, '');
 
   const resolve = (target) => {
+    // Docusaurus gives the page title no anchor id, so a README's own table of
+    // contents linking back to its heading would dangle. Send it to the top instead.
+    if (titleAnchor && target.toLowerCase() === `#${titleAnchor}`) return '#';
+
     if (/^[a-z][a-z0-9+.-]*:/i.test(target) || target.startsWith('//') || target.startsWith('#')) {
       return null;
     }
@@ -136,8 +151,12 @@ function rewriteLinks({body, slugPath, sourceDir, slugMap, blobBaseUrl, docsPath
     return `\u0000FENCE${fences.length - 1}\u0000`;
   });
 
+  // Link text may itself contain an image, which is how README badges are written:
+  // [![build status](shields.io/...)](LICENSE). Without allowing for that, only the
+  // inner image is seen and the outer link keeps pointing at a path that is not
+  // published.
   const rewritten = withoutFences.replace(
-    /(!?\[[^\]]*\]\()([^)\s]+)((?:\s+"[^"]*")?\))/g,
+    /(!?\[(?:[^[\]]|!\[[^\]]*\]\([^)]*\))*\]\()([^)\s]+)((?:\s+"[^"]*")?\))/g,
     (match, open, target, close) => {
       const next = resolve(target);
       return next === null ? match : `${open}${next}${close}`;
@@ -173,21 +192,17 @@ export function normalizeMarkdown({
 }) {
   const {data, body} = splitFrontMatter(content);
 
-  let workingBody = body;
-  let title = data.title ?? titleOverride;
-  if (!title) {
-    const extracted = extractLeadingHeading(workingBody);
-    title = extracted.title ?? humanizeFilename(relPath);
-    workingBody = extracted.body;
-  }
+  const heading = leadingHeading(body);
+  const title = data.title ?? titleOverride ?? heading ?? humanizeFilename(relPath);
 
-  workingBody = rewriteLinks({
-    body: workingBody,
+  const workingBody = rewriteLinks({
+    body,
     slugPath: slugMap.get(relPath) ?? relPath,
     sourceDir,
     slugMap,
     blobBaseUrl,
     docsPathPrefix,
+    titleAnchor: heading ? headingAnchor(heading) : null,
   });
 
   return serialize(

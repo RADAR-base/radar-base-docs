@@ -5,13 +5,8 @@
 
 homepage: Introduction.md
 
-# The repository's README carries the installation instructions, which the docs folder
-# does not repeat, so it is published as a page of its own.
-extraDocs:
-  - source: README.md
-    target: overview.md
-    title: Overview
-
+# The README is published as "Overview" automatically; it only needs listing in the
+# sidebar below to place it deliberately rather than at the top.
 sidebar:
   - Introduction.md
   - Why Radarpipeline.md
