@@ -1,0 +1,32 @@
+# Stand-in manifest for RADAR-base/radarpipeline.
+#
+# Delete this file once the repository ships its own docs/radar-docs.yml; anything it
+# defines there already takes precedence over this. See ../README.md.
+
+homepage: Introduction.md
+
+# The repository's README carries the installation instructions, which the docs folder
+# does not repeat, so it is published as a page of its own.
+extraDocs:
+  - source: README.md
+    target: overview.md
+    title: Overview
+
+sidebar:
+  - Introduction.md
+  - Why Radarpipeline.md
+  - label: Getting started
+    collapsed: false
+    items:
+      - overview.md
+      - Quickstart.md
+      - Configuration.md
+      - Core Concepts.md
+  - label: Guides
+    items:
+      - Create your first pipeline.md
+      - Radarpipeline as a CLI tool.md
+      - Radarpipeline & jupyter notebooks.md
+      - Radarpipeline for Big data.md
+      - RADAR-pipeline reformating the data.md
+  - Future plans.md

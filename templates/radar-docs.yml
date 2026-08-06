@@ -1,0 +1,50 @@
+# radar-docs.yml — copy this file to `docs/radar-docs.yml` in YOUR repository.
+#
+# This manifest is read by the RADAR-base documentation site when it builds. It is
+# how you, the maintainer of this repository, control how your documentation appears
+# on https://radar-base.github.io/radar-base-docs/ — without touching the docs site.
+#
+# Every field is optional. A repository with a `docs/` folder and no manifest at all
+# still gets published: pages are ordered alphabetically and titled from their
+# first `# heading` (or their filename).
+
+# Display name for this project in the site navigation.
+# Defaults to the label set in the docs site registry.
+label: RADAR Pipeline
+
+# One-line description, shown on the documentation site's home page.
+description: Python package to ingest, analyse and export RADAR-base data.
+
+# The page shown when a visitor lands on this project's documentation root.
+# Defaults to the first page in `sidebar`, or the alphabetically first page.
+homepage: Introduction.md
+
+# Glob patterns (relative to the docs folder) that should NOT be published.
+exclude:
+  - internal/**
+  - drafts/**
+
+# Extra files from outside the docs folder to publish as pages.
+# `source` is relative to the repository root.
+extraDocs:
+  - source: README.md
+    target: overview.md
+    title: Overview
+    position: 0
+
+# Navigation for this project. Omit it entirely to get an alphabetical listing.
+#
+# Entries are either a path to a markdown file (relative to the docs folder), or a
+# group with a `label` and `items`. Groups may be nested. Any published page you do
+# not list here is appended at the end, so a new file is never silently hidden.
+sidebar:
+  - Introduction.md
+  - label: Getting started
+    items:
+      - Quickstart.md
+      - Configuration.md
+  - label: Guides
+    collapsed: true
+    items:
+      - Create your first pipeline.md
+      - Radarpipeline as a CLI tool.md
