@@ -56,3 +56,9 @@ repos:
     repo: RADAR-base/RADAR-Kubernetes
     route: /kubernetes
     description: Radar-base deployment on Kubernetes.
+
+  - id: radar-helm-charts
+    label: RADAR-base/radar-helm-charts
+    repo: RADAR-base/radar-helm-charts
+    route: /helm-charts
+    description: Helm charts of the RADAR-base platform.
