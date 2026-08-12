@@ -79,3 +79,66 @@ repos:
       - radar-commons-gradle
       - docs
     description: Common utilities library containing basic schemas, streaming features, testing bridges and utils.
+
+  - id: radar-commons-android
+    label: RADAR Commons Android
+    repo: RADAR-base/radar-commons-android
+    branch: master
+    route: /commons-android
+    docsPath:
+      - plugins/radar-android-phone
+      - plugins/radar-android-audio
+      - plugins/radar-android-phone-telephony
+      - plugins/radar-android-faros
+      - plugins/radar-android-login-qr
+      - plugins/radar-android-empatica
+      - plugins/radar-android-phone-usage
+      - plugins/radar-android-google-sleep
+      - plugins/radar-android-google-places
+      - plugins/radar-android-google-activity
+      - plugins/radar-android-phone-audio-input
+      - plugins/radar-android-application-status
+      - avro-android
+      - plugins/radar-android-ppg
+      - plugins/radar-android-polar
+      - plugins/radar-android-weather
+      - plugins/radar-android-login-oauth2
+    description: Base module for the RADAR passive remote monitoring app. Plugins for that app should implement the API from this base library. Also user interfaces should use this as a base.
+
+  - id: radar-jdbc-connector
+    label: RADAR JDBC Connector
+    repo: RADAR-base/RADAR-JDBC-Connector
+    branch: master
+    route: /jdbc-connector
+    docsPath:
+      - doc
+      - kafka-connect-jdbc
+    description: RADAR TimescaleDB Sink Connector and JDBC Connector
+
+  - id: radar-k8s-infrastructure
+    label: RADAR K8s Infrastructure
+    repo: RADAR-base/RADAR-K8s-Infrastructure
+    route: /k8s-infrastructure
+    docsPath:
+      - azure
+      - aws/config
+      - aws/cluster
+      - azure/registry
+    description: RADAR Kubernetes infrastructure for deploying RADAR-base on Kubernetes.
+
+  - id: radar-push-endpoint
+    label: RADAR Push Endpoint
+    branch: master
+    repo: RADAR-base/RADAR-PushEndpoint
+    route: /push-endpoint
+    description: RADAR Push Endpoint that exposes REST interface for push subscription based APIs to the Apache Kafka.
+
+  - id: radar-questionnaire
+    label: RADAR Questionnaire
+    branch: master
+    repo: RADAR-base/RADAR-Questionnaire
+    route: /questionnaire
+    docsPath:
+      - resources
+      - docs
+    description: A hybrid mobile application to actively capture data for the RADAR-Base Platform.
