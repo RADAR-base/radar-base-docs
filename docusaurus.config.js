@@ -88,7 +88,7 @@ const config = {
   tagline: 'Documentation for the RADAR-base remote data collection platform',
   url,
   baseUrl,
-  favicon: 'img/favicon.svg',
+  favicon: 'img/logo.png',
   organizationName: 'RADAR-base',
   projectName: 'radar-base-docs',
   // Every route becomes a directory with an index.html. Besides suiting GitHub Pages,
@@ -137,7 +137,7 @@ const config = {
       colorMode: {respectPrefersColorScheme: true},
       navbar: {
         title: 'RADAR-base',
-        logo: {alt: 'RADAR-base', src: 'img/logo.svg'},
+        logo: {alt: 'RADAR-base', src: 'img/logo.png'},
         items: [
           {to: '/platform/', label: 'Platform', position: 'left'},
           {
