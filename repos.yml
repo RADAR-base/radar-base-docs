@@ -47,11 +47,10 @@ repos:
     repo: RADAR-base/ManagementPortal
     branch: master
     route: /management-portal
-    paths:
+    docsPath:
       - radar-auth
-      - README.md
       - managementportal-client
-    description: Study and participant manageme§nt for RADAR-base.
+    description: Study and participant management for RADAR-base.
   #
   # A project that does not tag releases, or whose docs should always track main:
   #
@@ -62,10 +61,21 @@ repos:
     description: Radar-base deployment on Kubernetes.
 
   - id: radar-appserver
-    label: RADAR App Server
-    repo: RADAR-base/RADAR-App-Server
-    route: /app-server
-    paths:
-      - README.md
-      - scripts/
+    branch: master
+    label: RADAR Appserver
+    repo: RADAR-base/RADAR-Appserver
+    route: /appserver
+    docsPath:
+      - scripts
+      - docs
     description: RADAR-base backend for data collection and management.
+
+  - id: radar-commons
+    label: RADAR Commons
+    repo: RADAR-base/radar-commons
+    branch: master
+    route: /commons
+    docsPath:
+      - radar-commons-gradle
+      - docs
+    description: Common utilities library containing basic schemas, streaming features, testing bridges and utils.

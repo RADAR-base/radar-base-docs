@@ -12,7 +12,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import {load as parseYaml} from 'js-yaml';
 
-import {GENERATED_FILE, SITE_DIR, loadRegistry} from './lib/config.mjs';
+import {GENERATED_FILE, SITE_DIR, loadRegistry, normalizeDocsPaths} from './lib/config.mjs';
 import {checkoutRef, compareVersions, listRemoteTags} from './lib/git.mjs';
 import {addFrontMatter, docIdFor, isMarkdown, normalizeMarkdown, slugifyPath} from './lib/markdown.mjs';
 import {buildSidebar} from './lib/sidebar.mjs';
@@ -51,9 +51,44 @@ function walk(dir, base = dir) {
   });
 }
 
-function readManifest(checkoutDir, docsPath) {
+/** Path of a docs-folder-relative file from the repository root. */
+function repoPathFor(docsPath, relPath) {
+  return docsPath === '.' ? relPath : `${docsPath}/${relPath}`;
+}
+
+/** Directory a docs folder's pages are published under, empty when it is the only one. */
+function outputPrefixFor(docsPath, nested) {
+  if (!nested) return '';
+  return slugifyPath(docsPath === '.' ? 'root' : docsPath);
+}
+
+/**
+ * Assigns each file its place in the published output, dropping anything whose target is
+ * already taken — two source files that slugify to the same name, most often.
+ *
+ * @returns {{publishable: object[], slugMap: Map<string, string>}} repo path -> published path.
+ */
+function resolveTargets(entries, ref) {
+  const slugMap = new Map();
+  const claimedBy = new Map();
+  const publishable = entries.filter((entry) => {
+    const owner = claimedBy.get(entry.slugPath);
+    if (owner !== undefined) {
+      warn(`${entry.repoPath} would overwrite ${owner} at ${ref} — skipped`);
+      return false;
+    }
+    claimedBy.set(entry.slugPath, entry.repoPath);
+    slugMap.set(entry.repoPath, entry.slugPath);
+    return true;
+  });
+  return {publishable, slugMap};
+}
+
+function readManifest(checkoutDir, docsPaths) {
   const candidates = [
-    ...MANIFEST_CANDIDATES.map((name) => path.join(checkoutDir, docsPath, name)),
+    ...docsPaths.flatMap((docsPath) =>
+      MANIFEST_CANDIDATES.map((name) => path.join(checkoutDir, docsPath, name)),
+    ),
     ...MANIFEST_CANDIDATES.map((name) => path.join(checkoutDir, name)),
   ];
   for (const candidate of candidates) {
@@ -105,16 +140,19 @@ function resolveReadme({checkoutDir, manifest, repo, extras, sources}) {
   }
 
   // Already published deliberately, with the maintainer's own title and placement.
-  if (extras.some((extra) => extra.source === source)) return null;
+  if (extras.some((extra) => extra.repoPath === source)) return null;
 
-  const taken = new Set([
-    ...sources.map((relPath) => slugifyPath(relPath)),
-    ...extras.map((extra) => slugifyPath(extra.relPath)),
-  ]);
+  const taken = new Set([...sources, ...extras].map((entry) => entry.slugPath));
   const target = ['overview.md', 'readme.md', 'project-readme.md'].find((name) => !taken.has(name));
   if (!target) return null;
 
-  return {source, absolute: path.join(checkoutDir, source), relPath: target, title: 'Overview'};
+  return {
+    repoPath: source,
+    absolute: path.join(checkoutDir, source),
+    relPath: target,
+    slugPath: slugifyPath(target),
+    title: 'Overview',
+  };
 }
 
 /**
@@ -126,7 +164,7 @@ function pickHomepage({manifest, sidebar, docs}) {
   if (manifest.homepage) {
     const named = docs.find(
       (doc) =>
-        [doc.relPath, doc.slugPath, doc.docId].includes(manifest.homepage) ||
+        [doc.relPath, doc.repoPath, doc.slugPath, doc.docId].includes(manifest.homepage) ||
         doc.slugPath === slugifyPath(manifest.homepage),
     );
     if (named) return named;
@@ -151,25 +189,45 @@ function pickHomepage({manifest, sidebar, docs}) {
  * the metadata the site needs. `ref` is a branch or tag; `blobRef` is what edit links
  * should point at.
  */
-function renderDocs({checkoutDir, outputDir, repo, manifest, docsPath, ref, editable}) {
-  const docsRoot = path.join(checkoutDir, docsPath);
-  const hasDocsFolder = fs.existsSync(docsRoot);
+function renderDocs({checkoutDir, outputDir, repo, manifest, docsPaths, ref, editable}) {
+  const present = docsPaths.filter((docsPath) => fs.existsSync(path.join(checkoutDir, docsPath)));
+  for (const absent of docsPaths.filter((docsPath) => !present.includes(docsPath))) {
+    warn(`no "${absent}" folder at ${ref}`);
+  }
 
   const excludes = (manifest.exclude ?? []).map(globToRegExp);
-  const isExcluded = (relPath) =>
+  // Exclude patterns are matched against the path within a docs folder, which is how a
+  // project with one folder writes them, and against the path from the repository root,
+  // which is the only way to name one of several folders.
+  const isExcluded = (relPath, repoPath) =>
     MANIFEST_CANDIDATES.includes(path.posix.basename(relPath)) ||
-    excludes.some((pattern) => pattern.test(relPath));
+    excludes.some((pattern) => pattern.test(relPath) || pattern.test(repoPath));
 
-  const sources = !hasDocsFolder
-    ? []
-    : walk(docsRoot)
-        .filter((relPath) => !isExcluded(relPath))
-        .filter(
-          (relPath) => isMarkdown(relPath) || ASSET_EXTENSIONS.has(path.extname(relPath).toLowerCase()),
-        )
-        .sort();
+  // Several docs folders are published side by side, each under a directory named after
+  // it, so that files sharing a name across folders do not collide. A single folder is
+  // published flat at the docs root, which is where its pages have always lived.
+  const nested = docsPaths.length > 1;
 
-  // Files outside the docs folder that the manifest asks to publish.
+  const sources = present.flatMap((docsPath) => {
+    const prefix = outputPrefixFor(docsPath, nested);
+    return walk(path.join(checkoutDir, docsPath))
+      .sort()
+      .map((relPath) => ({
+        relPath,
+        repoPath: repoPathFor(docsPath, relPath),
+        absolute: path.join(checkoutDir, docsPath, relPath),
+        slugPath: path.posix.join(prefix, slugifyPath(relPath)),
+      }))
+      .filter((entry) => !isExcluded(entry.relPath, entry.repoPath))
+      .filter(
+        (entry) =>
+          isMarkdown(entry.relPath) ||
+          ASSET_EXTENSIONS.has(path.extname(entry.relPath).toLowerCase()),
+      );
+  });
+
+  // Files outside the docs folders that the manifest asks to publish. These name their
+  // own target, so they are published at the docs root even when the folders are nested.
   const extras = (manifest.extraDocs ?? [])
     .map((entry) => {
       const source = path.join(checkoutDir, entry.source ?? '');
@@ -177,7 +235,8 @@ function renderDocs({checkoutDir, outputDir, repo, manifest, docsPath, ref, edit
         warn(`extraDocs: "${entry.source}" not found at ${ref}`);
         return null;
       }
-      return {...entry, absolute: source, relPath: entry.target ?? path.posix.basename(entry.source)};
+      const relPath = entry.target ?? path.posix.basename(entry.source);
+      return {...entry, repoPath: entry.source, absolute: source, relPath, slugPath: slugifyPath(relPath)};
     })
     .filter(Boolean);
 
@@ -187,13 +246,14 @@ function renderDocs({checkoutDir, outputDir, repo, manifest, docsPath, ref, edit
   const readme = resolveReadme({checkoutDir, manifest, repo, extras, sources});
   if (readme) extras.unshift(readme);
 
-  if (!hasDocsFolder && !readme) {
-    throw new Error(`no "${docsPath}" folder and no README at ${ref}`);
+  if (present.length === 0 && !readme) {
+    const folders = docsPaths.map((docsPath) => `"${docsPath}"`).join(', ');
+    throw new Error(`no ${folders} folder and no README at ${ref}`);
   }
 
-  const slugMap = new Map();
-  for (const relPath of sources) slugMap.set(relPath, slugifyPath(relPath));
-  for (const extra of extras) slugMap.set(extra.relPath, slugifyPath(extra.relPath));
+  // `slugMap` is keyed by path from the repository root, so a link can be followed from
+  // any page to any other regardless of which folder either was published from.
+  const {publishable, slugMap} = resolveTargets([...extras, ...sources], ref);
 
   const blobBaseUrl = `${repo.htmlUrl}/blob/${ref}`;
   const editBaseUrl = editable ? `${repo.htmlUrl}/edit/${ref}` : null;
@@ -202,49 +262,32 @@ function renderDocs({checkoutDir, outputDir, repo, manifest, docsPath, ref, edit
   fs.rmSync(outputDir, {recursive: true, force: true});
   fs.mkdirSync(outputDir, {recursive: true});
 
-  const emit = ({relPath, absolute, sourceInRepo, titleOverride, position}) => {
-    const slugPath = slugMap.get(relPath);
+  for (const entry of publishable) {
+    const {relPath, repoPath, slugPath, absolute} = entry;
     const target = path.join(outputDir, slugPath);
     fs.mkdirSync(path.dirname(target), {recursive: true});
 
     if (!isMarkdown(relPath)) {
       fs.copyFileSync(absolute, target);
-      return;
+      continue;
     }
 
-    const encodedSource = sourceInRepo.split('/').map(encodeURIComponent).join('/');
+    const encodedSource = repoPath.split('/').map(encodeURIComponent).join('/');
     fs.writeFileSync(
       target,
       normalizeMarkdown({
         content: fs.readFileSync(absolute, 'utf8'),
         relPath,
-        sourceDir: path.posix.dirname(sourceInRepo),
+        slugPath,
+        sourceDir: path.posix.dirname(repoPath),
         slugMap,
         blobBaseUrl,
         editUrl: editBaseUrl ? `${editBaseUrl}/${encodedSource}` : `${blobBaseUrl}/${encodedSource}`,
-        docsPathPrefix: docsPath,
-        sidebarPosition: position,
-        titleOverride,
+        sidebarPosition: entry.position,
+        titleOverride: entry.title,
       }),
     );
-    docs.push({relPath, slugPath, docId: docIdFor(slugPath)});
-  };
-
-  for (const extra of extras) {
-    emit({
-      relPath: extra.relPath,
-      absolute: extra.absolute,
-      sourceInRepo: extra.source,
-      titleOverride: extra.title,
-      position: extra.position,
-    });
-  }
-  for (const relPath of sources) {
-    emit({
-      relPath,
-      absolute: path.join(docsRoot, relPath),
-      sourceInRepo: `${docsPath}/${relPath}`,
-    });
+    docs.push({relPath, repoPath, slugPath, docId: docIdFor(slugPath)});
   }
 
   if (docs.length === 0) throw new Error(`no publishable markdown at ${ref}`);
@@ -252,16 +295,16 @@ function renderDocs({checkoutDir, outputDir, repo, manifest, docsPath, ref, edit
   const {sidebar, missing} = buildSidebar({
     manifestSidebar: manifest.sidebar,
     docs,
-    pinned: readme ? [docIdFor(slugifyPath(readme.relPath))] : [],
+    pinned: readme ? [docIdFor(readme.slugPath)] : [],
   });
   // A ref with no docs folder publishes only the README, so every sidebar entry is
   // trivially missing; warning about each one would bury anything worth reading.
-  if (hasDocsFolder) {
+  if (present.length > 0) {
     for (const entry of missing) {
       warn(`sidebar entry "${entry}" does not match a published page at ${ref}`);
     }
   } else if (missing.length > 0) {
-    warn(`${ref} has no "${docsPath}" folder — published its README only`);
+    warn(`${ref} has no docs folder — published its README only`);
   }
 
   const homepageDoc = pickHomepage({manifest, sidebar, docs});
@@ -273,32 +316,56 @@ function renderDocs({checkoutDir, outputDir, repo, manifest, docsPath, ref, edit
   return {sidebar, docCount: docs.length};
 }
 
+/** The paths a checkout of `docsPaths` needs to download. */
+function sparsePathsFor(docsPaths) {
+  return [
+    ...docsPaths.map((docsPath) => (docsPath === '.' ? '/*' : `/${docsPath}/`)),
+    ...MANIFEST_CANDIDATES.map((name) => `/${name}`),
+    ...README_CANDIDATES.map((name) => `/${name}`),
+    '/CHANGELOG.md',
+    '/CONTRIBUTING.md',
+  ];
+}
+
 async function materializeRef({repo, ref, versionName, staging}) {
   const cacheKey = `${repo.id}/${ref.replace(/[^a-zA-Z0-9._-]/g, '_')}`;
   const checkoutDir = path.join(CACHE_DIR, 'git', cacheKey);
   const marker = path.join(checkoutDir, '.radar-docs-fetched');
   const isTag = versionName !== null;
 
-  // Tags are immutable, so a cached checkout of one is always current.
-  if (!(isTag && !options.noCache && fs.existsSync(marker))) {
-    await checkoutRef({
-      cloneUrl: repo.cloneUrl,
-      ref,
-      destination: checkoutDir,
-      sparsePaths: [
-        `/${repo.docsPath}/`,
-        ...MANIFEST_CANDIDATES.map((name) => `/${name}`),
-        ...README_CANDIDATES.map((name) => `/${name}`),
-        '/CHANGELOG.md',
-        '/CONTRIBUTING.md',
-      ],
-    });
-    fs.writeFileSync(marker, ref);
-  }
+  const fetchPaths = async (docsPaths) => {
+    const sparsePaths = sparsePathsFor(docsPaths);
+    await checkoutRef({cloneUrl: repo.cloneUrl, ref, destination: checkoutDir, sparsePaths});
+    fs.writeFileSync(marker, `${ref}\n${sparsePaths.join('\n')}\n`);
+  };
 
-  const {manifest} = readManifest(checkoutDir, repo.docsPath);
+  // A tag is immutable, so a cached checkout of one is current — but only for the paths
+  // it was told to download. When repos.yml or a manifest names a different `docsPath`,
+  // the cached checkout is missing the new folders and has to be fetched again. A
+  // checkout of more paths than are needed still counts: a manifest asking for folders
+  // of its own leaves a wider checkout behind, which the next run can reuse.
+  const cachedFor = (docsPaths) => {
+    if (!fs.existsSync(marker)) return false;
+    const [cachedRef, ...cachedPaths] = fs.readFileSync(marker, 'utf8').trim().split('\n');
+    return cachedRef === ref && sparsePathsFor(docsPaths).every((p) => cachedPaths.includes(p));
+  };
+
+  if (!(isTag && !options.noCache && cachedFor(repo.docsPaths))) await fetchPaths(repo.docsPaths);
+
+  const {manifest} = readManifest(checkoutDir, repo.docsPaths);
   const manifestWithFallback = {...readFallbackManifest(repo.id), ...manifest};
-  const docsPath = manifestWithFallback.docsPath ?? repo.docsPath;
+  const docsPaths =
+    manifestWithFallback.docsPath === undefined
+      ? repo.docsPaths
+      : normalizeDocsPaths(manifestWithFallback.docsPath, `${repo.id} manifest`);
+
+  // A project's own manifest may name folders repos.yml did not, which the sparse
+  // checkout above therefore left out; fetch again, for those as well.
+  const unfetched = docsPaths.filter(
+    (docsPath) => !repo.docsPaths.includes(docsPath) && !fs.existsSync(path.join(checkoutDir, docsPath)),
+  );
+  if (unfetched.length > 0) await fetchPaths([...new Set([...repo.docsPaths, ...docsPaths])]);
+
   const outputDir = path.join(staging, versionName === null ? 'current' : `version-${versionName}`);
 
   const rendered = renderDocs({
@@ -306,7 +373,7 @@ async function materializeRef({repo, ref, versionName, staging}) {
     outputDir,
     repo,
     manifest: manifestWithFallback,
-    docsPath,
+    docsPaths,
     ref,
     editable: !isTag,
   });

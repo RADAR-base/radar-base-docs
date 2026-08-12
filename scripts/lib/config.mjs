@@ -23,6 +23,29 @@ function deepMerge(base, override) {
 }
 
 /**
+ * `docsPath` is either one folder or a list of them, in repos.yml and in a project's
+ * own manifest alike; everything downstream works with the list form. A list given by
+ * an entry replaces the default rather than adding to it, so a repository whose docs
+ * live somewhere other than `docs/` does not have to keep listing a folder it lacks.
+ *
+ * @returns {string[]} Folders relative to the repository root; `.` means the root.
+ */
+export function normalizeDocsPaths(value, context = 'repos.yml') {
+  const entries = Array.isArray(value) ? value : [value];
+  const cleaned = entries
+    .filter((entry) => entry !== undefined && entry !== null)
+    .map((entry) => {
+      if (typeof entry !== 'string') {
+        throw new TypeError(`${context}: docsPath must be a string or a list of strings`);
+      }
+      const trimmed = entry.trim().replace(/^\.\//, '').replace(/^\/+/, '').replace(/\/+$/, '');
+      return trimmed === '' || trimmed === '.' ? '.' : trimmed;
+    });
+
+  return [...new Set(cleaned.length > 0 ? cleaned : ['docs'])];
+}
+
+/**
  * Reads repos.yml and returns one fully-resolved entry per repository, with the
  * `defaults` block folded into each. Fields owned by the project's own repository
  * (labels, page order, ...) are not resolved here — they come from its manifest.
@@ -52,6 +75,7 @@ export function loadRegistry(registryPath = path.join(SITE_DIR, 'repos.yml')) {
     return {
       ...resolved,
       label: resolved.label ?? resolved.id,
+      docsPaths: normalizeDocsPaths(resolved.docsPath, `repos.yml: ${resolved.id}`),
       route: resolved.route.startsWith('/') ? resolved.route : `/${resolved.route}`,
       cloneUrl: `https://github.com/${resolved.repo}.git`,
       htmlUrl: `https://github.com/${resolved.repo}`,

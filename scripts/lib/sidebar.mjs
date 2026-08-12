@@ -5,14 +5,15 @@ import {docIdFor, slugifyPath} from './markdown.mjs';
  * Turns the `sidebar:` block of a project's radar-docs.yml into a Docusaurus sidebar.
  *
  * Maintainers refer to their own files the way they wrote them ("Quickstart.md"), so
- * entries are matched against the original path, the slugified path and the bare
- * filename. Anything published but not listed is appended, so adding a file to a repo
- * never makes it invisible.
+ * entries are matched against the path within their docs folder, the path from the
+ * repository root — the way to tell apart same-named files in two docs folders — the
+ * slugified path and the bare filename. Anything published but not listed is appended,
+ * so adding a file to a repo never makes it invisible.
  */
 export function buildSidebar({manifestSidebar, docs, pinned = []}) {
   const byKey = new Map();
   for (const doc of docs) {
-    for (const key of [doc.relPath, doc.slugPath, doc.docId, path.posix.basename(doc.relPath)]) {
+    for (const key of [doc.repoPath, doc.relPath, doc.slugPath, doc.docId, path.posix.basename(doc.relPath)]) {
       if (key && !byKey.has(key)) byKey.set(key, doc);
     }
   }

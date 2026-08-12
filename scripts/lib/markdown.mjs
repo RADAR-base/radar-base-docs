@@ -90,21 +90,21 @@ function headingAnchor(heading) {
  * Rewrites markdown link and image targets.
  *
  * Link targets are resolved against the source file's real location in the repository,
- * which matters for pages published from outside the docs folder (a README, say): its
- * links are relative to the repository root, not to the docs folder.
+ * and looked up by that repository-relative path. Resolving from the repository root is
+ * what lets a page link to a page published from a different docs folder, or from
+ * outside any of them (a README, say), whose links are relative to the repository root.
  *
  * A target that lands on another published page becomes a relative link between the two
- * renamed files. Anything else — source code, a file the docs folder does not contain —
- * becomes a link to that file on GitHub at the revision being published, which is the
- * closest thing to what the author meant.
+ * renamed files. Anything else — source code, a file no docs folder contains — becomes a
+ * link to that file on GitHub at the revision being published, which is the closest
+ * thing to what the author meant.
  *
  * @param {object} args
  * @param {string} args.sourceDir  Directory of this file relative to the repository root.
- * @param {Map<string, string>} args.slugMap  Docs-relative path -> slugified path.
+ * @param {Map<string, string>} args.slugMap  Repository-relative path -> published path.
  */
-function rewriteLinks({body, slugPath, sourceDir, slugMap, blobBaseUrl, docsPathPrefix, titleAnchor}) {
+function rewriteLinks({body, slugPath, sourceDir, slugMap, blobBaseUrl, titleAnchor}) {
   const slugFromDir = path.posix.dirname(slugPath);
-  const docsPrefix = docsPathPrefix.replace(/\/+$/, '');
 
   const resolve = (target) => {
     // Docusaurus gives the page title no anchor id, so a README's own table of
@@ -128,14 +128,7 @@ function rewriteLinks({body, slugPath, sourceDir, slugMap, blobBaseUrl, docsPath
     const fromRepoRoot = path.posix.normalize(path.posix.join(sourceDir, decoded));
     if (fromRepoRoot.startsWith('..')) return null;
 
-    const inDocsFolder =
-      docsPrefix === '' || docsPrefix === '.'
-        ? fromRepoRoot
-        : fromRepoRoot.startsWith(`${docsPrefix}/`)
-          ? fromRepoRoot.slice(docsPrefix.length + 1)
-          : null;
-
-    const slugTarget = inDocsFolder === null ? undefined : slugMap.get(inDocsFolder);
+    const slugTarget = slugMap.get(fromRepoRoot);
     if (slugTarget) {
       const relative = path.posix.relative(slugFromDir, slugTarget);
       return (relative.startsWith('.') ? relative : `./${relative}`) + suffix;
@@ -176,17 +169,18 @@ function serialize(frontMatter, body) {
  * matter is preserved, anything missing is inferred.
  *
  * @param {object} args
- * @param {string} args.relPath    Path of the source file, relative to the docs folder.
+ * @param {string} args.relPath    Path of the source file, relative to its docs folder.
+ * @param {string} args.slugPath   Where this page is published, relative to the docs root.
  * @param {string} args.sourceDir  Directory of the source file, relative to the repo root.
  */
 export function normalizeMarkdown({
   content,
   relPath,
+  slugPath,
   sourceDir,
   slugMap,
   blobBaseUrl,
   editUrl,
-  docsPathPrefix,
   sidebarPosition,
   titleOverride,
 }) {
@@ -197,11 +191,10 @@ export function normalizeMarkdown({
 
   const workingBody = rewriteLinks({
     body,
-    slugPath: slugMap.get(relPath) ?? relPath,
+    slugPath,
     sourceDir,
     slugMap,
     blobBaseUrl,
-    docsPathPrefix,
     titleAnchor: heading ? headingAnchor(heading) : null,
   });
 
