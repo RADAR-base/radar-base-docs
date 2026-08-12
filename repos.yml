@@ -142,3 +142,45 @@ repos:
       - resources
       - docs
     description: A hybrid mobile application to actively capture data for the RADAR-Base Platform.
+
+  - id: radar-redcap-armt-definitions
+    label: RADAR REDCap aRMT Definitions
+    branch: master
+    repo: RADAR-base/RADAR-REDCap-aRMT-Definitions
+    route: /redcap-armt-definitions
+    description: This folder contains REDCap Metadata Definition files for questionnaires used in the aRMT app
+
+  - id: radar-rest-source-auth
+    label: RADAR Rest Source Auth
+    branch: master
+    repo: RADAR-base/RADAR-Rest-Source-Auth
+    route: /rest-source-auth
+    docsPath:
+      - docs
+      - authorizer-app
+    description: An application to get authorization from users to access their data through 3rd party APIs
+
+  - id: radar-schemas
+    label: RADAR Schemas
+    branch: master
+    repo: RADAR-base/RADAR-Schemas
+    route: /schemas
+    docsPath:
+      - commons
+      - java-sdk
+      - specifications
+    description: Avro schemas used in RADAR-base.
+
+  - id: radar-self-enrolment-definitions
+    label: RADAR Self Enrolment Definitions
+    branch: main
+    repo: RADAR-base/radar-self-enrolment-definitions
+    route: /self-enrolment-definitions
+    description: Definition files to define the contents and behaviour of various parts of self enrolment portal such as study information, eligibility, consent and more.
+
+  - id: radar-self-enrolment-ui
+    label: RADAR Self Enrolment UI
+    branch: main
+    repo: RADAR-base/radar-self-enrolment-ui
+    route: /self-enrolment-ui
+    description: The webportal for self enrolment of participants in RADAR-base studies.
