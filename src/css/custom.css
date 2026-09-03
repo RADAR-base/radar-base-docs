@@ -172,3 +172,43 @@
 .plugin-id-participant .markdown a > img {
   max-height: 18rem;
 }
+
+/**
+ * The participant guides are Canva designs, embedded so they can be read without leaving
+ * the page. The source markup sized each frame with inline styles and a padding-top ratio
+ * hack; a class keeps the markdown readable and the two guides identical. Both designs are
+ * A4 portrait, which is what the ratio below describes.
+ */
+.canvaEmbed {
+  position: relative;
+  width: 100%;
+  max-width: 44rem;
+  aspect-ratio: 1 / 1.4142;
+  margin: 1.6rem 0 0.9rem;
+  overflow: hidden;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px 0 rgba(63, 69, 81, 0.16);
+  /* Visible while the embed loads, and if a privacy extension blocks it outright. */
+  background: var(--ifm-color-emphasis-200);
+}
+
+.canvaEmbed iframe {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  padding: 0;
+  border: none;
+}
+
+/* The embed is not always available, and the design reads better full screen on a phone. */
+.embedCaption {
+  max-width: 44rem;
+  font-size: 0.9rem;
+  color: var(--ifm-color-emphasis-700);
+}
+
+.embedCaption p {
+  margin-bottom: 0;
+}

@@ -44,7 +44,9 @@ For running a study, the **Client** section covers the
 apps, the [phone sensors](/client/phone-data-sensors) and
 [devices](/client/supported-devices) they collect from, and
 [authorising third-party wearable accounts](/client/rest-source-auth). The **Participant**
-section has the [user guide documents](/participant/) written for study participants.
+section has the guides written for study participants: the
+[active app guide](/participant/active-app-user-guide) and the
+[wearable guide](/participant/wearable-user-guides).
 
 ## Where to start
 

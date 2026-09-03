@@ -77,10 +77,16 @@ const participantGuides = {
     'Material written for the people taking part in a study, to hand out or adapt for your own.',
   pages: [
     {
-      label: 'User guide documents',
-      to: '/participant/',
+      label: 'Active app user guide',
+      to: '/participant/active-app-user-guide',
       description:
-        'Graphical user guides for participants: getting started with the wearable, and with the active (questionnaire) app.',
+        'Graphical user guide for participants: getting started with the active (questionnaire) app.',
+    },
+    {
+      label: 'Wearable user guide',
+      to: '/participant/wearable-user-guides',
+      description:
+        'Graphical user guide for participants: getting started with the wearable device.',
     },
   ],
 };
