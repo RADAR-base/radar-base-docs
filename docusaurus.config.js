@@ -2,6 +2,7 @@
 const fs = require('node:fs');
 const path = require('node:path');
 const {themes} = require('prism-react-renderer');
+const {externalDocSections, platformDocs} = require('./src/data/externalDocs');
 
 /**
  * One published component, as written to .generated/repos.json by scripts/fetch-docs.mjs.
@@ -148,6 +149,14 @@ const config = {
             position: 'left',
             items: repos.map((repo) => ({to: `${repo.route}/`, label: repo.label})),
           },
+          // Client and participant documentation is published on radar-base.org, not in a
+          // repository, so these entries link out. See src/data/externalDocs.js.
+          ...externalDocSections.map((section) => ({
+            type: 'dropdown',
+            label: section.title.replace(' documentation', ''),
+            position: 'left',
+            items: section.docs.map((doc) => ({href: doc.href, label: doc.label})),
+          })),
           {to: '/platform/faq', label: 'FAQ', position: 'left'},
           // Shows the version picker for whichever component the reader is in.
           {type: 'custom-activeDocsVersionDropdown', position: 'right'},
@@ -162,6 +171,15 @@ const config = {
             items: [
               {label: 'Platform', to: '/platform/'},
               ...repos.map((repo) => ({label: repo.label, to: `${repo.route}/`})),
+            ],
+          },
+          {
+            title: 'Clients and participants',
+            items: [
+              ...externalDocSections.flatMap((section) =>
+                section.docs.map((doc) => ({label: doc.label, href: doc.href})),
+              ),
+              ...platformDocs.map((doc) => ({label: doc.label, href: doc.href})),
             ],
           },
           {

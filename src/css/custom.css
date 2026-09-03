@@ -148,3 +148,19 @@
 .navbar__item .alphaBadge {
   vertical-align: middle;
 }
+
+.sectionBlurb {
+  max-width: 46rem;
+  margin: 0.35rem 0 1.25rem;
+  color: var(--ifm-color-emphasis-700);
+}
+
+/* Cards that leave the site read as links, not as another documentation section. */
+.componentCard--external {
+  border-style: dashed;
+}
+
+.componentCard__external {
+  font-size: 0.85em;
+  opacity: 0.7;
+}

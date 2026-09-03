@@ -3,6 +3,7 @@ import Link from '@docusaurus/Link';
 import useBaseUrl from '@docusaurus/useBaseUrl';
 import useDocusaurusContext from '@docusaurus/useDocusaurusContext';
 import Layout from '@theme/Layout';
+import {EXTERNAL_HOST, externalDocSections} from '../data/externalDocs';
 
 /**
  * The component list is whatever the last documentation fetch produced, so a repository
@@ -21,6 +22,43 @@ function ComponentCard({repo}) {
         </div>
       </Link>
     </li>
+  );
+}
+
+/**
+ * Client and participant documentation lives on radar-base.org, so these cards leave the
+ * site. The host is on the card, and the arrow marks the link, so that is not a surprise.
+ */
+function ExternalDocCard({doc}) {
+  return (
+    <li>
+      <Link className="componentCard componentCard--external" to={doc.href}>
+        <h3 className="componentCard__title">
+          {doc.label}
+          <span className="componentCard__external" aria-hidden="true"> ↗</span>
+        </h3>
+        <p className="componentCard__description">{doc.description}</p>
+        <div className="componentCard__meta">
+          <span className="componentCard__badge">{EXTERNAL_HOST}</span>
+        </div>
+      </Link>
+    </li>
+  );
+}
+
+function ExternalDocSection({section}) {
+  return (
+    <>
+      <h2 className="margin-top--xl" id={section.id}>
+        {section.title}
+      </h2>
+      <p className="sectionBlurb">{section.blurb}</p>
+      <ul className="componentGrid">
+        {section.docs.map((doc) => (
+          <ExternalDocCard key={doc.href} doc={doc} />
+        ))}
+      </ul>
+    </>
   );
 }
 
@@ -57,7 +95,11 @@ export default function Home() {
       </header>
 
       <main className="container margin-vert--xl">
-        <h2>Components</h2>
+        <h2 id="components">Components</h2>
+        <p className="sectionBlurb">
+          One section per RADAR-base repository, published from that repository and versioned
+          with its releases.
+        </p>
         {repos.length === 0 ? (
           <p className="emptyState">
             No component documentation has been fetched yet. Run <code>npm run fetch-docs</code> to
@@ -70,6 +112,10 @@ export default function Home() {
             ))}
           </ul>
         )}
+
+        {externalDocSections.map((section) => (
+          <ExternalDocSection key={section.id} section={section} />
+        ))}
 
         <h2 className="margin-top--xl">Questions and common issues</h2>
         <p>
