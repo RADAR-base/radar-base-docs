@@ -155,12 +155,20 @@
   color: var(--ifm-color-emphasis-700);
 }
 
-/* Cards that leave the site read as links, not as another documentation section. */
-.componentCard--external {
-  border-style: dashed;
+/**
+ * The client and participant pages were copied from a site whose layout sized their images
+ * for it: portrait phone screenshots, and guide covers shown as thumbnails. Cap them here so
+ * a page does not turn into a column of full-width images. Component documentation is left
+ * alone — those pages size their own images.
+ */
+.plugin-id-client .markdown img,
+.plugin-id-participant .markdown img {
+  max-height: 26rem;
+  width: auto;
+  border-radius: var(--ifm-global-radius);
 }
 
-.componentCard__external {
-  font-size: 0.85em;
-  opacity: 0.7;
+/* Cover art for a downloadable guide is a thumbnail, not an illustration. */
+.plugin-id-participant .markdown a > img {
+  max-height: 18rem;
 }

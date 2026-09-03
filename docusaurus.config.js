@@ -2,7 +2,7 @@
 const fs = require('node:fs');
 const path = require('node:path');
 const {themes} = require('prism-react-renderer');
-const {externalDocSections, platformDocs} = require('./src/data/externalDocs');
+const {guideSections, platformGuides} = require('./src/data/guides');
 
 /**
  * One published component, as written to .generated/repos.json by scripts/fetch-docs.mjs.
@@ -64,6 +64,25 @@ const docsPlugins = repos.map((repo) => [
   },
 ]);
 
+/**
+ * Documentation written in this repository that is not about one component: the client and
+ * participant guides, copied from radar-base.org. Each is a docs section of its own so it
+ * gets its own sidebar and route, the same as the platform section.
+ */
+const guidePlugins = [
+  ['client', 'Client'],
+  ['participant', 'Participant'],
+].map(([id, name]) => [
+  '@docusaurus/plugin-content-docs',
+  {
+    id,
+    path: `content/${id}`,
+    routeBasePath: `/${id}`,
+    sidebarPath: require.resolve(`./sidebars${name}.js`),
+    editUrl: 'https://github.com/RADAR-base/radar-base-docs/edit/main/',
+  },
+]);
+
 const searchPlugin = (() => {
   try {
     require.resolve('@easyops-cn/docusaurus-search-local');
@@ -76,8 +95,18 @@ const searchPlugin = (() => {
       {
         hashed: true,
         indexBlog: false,
-        docsDir: ['content/platform', ...repos.map((repo) => `docs/${repo.id}`)],
-        docsRouteBasePath: ['/platform', ...repos.map((repo) => repo.route)],
+        docsDir: [
+          'content/platform',
+          'content/client',
+          'content/participant',
+          ...repos.map((repo) => `docs/${repo.id}`),
+        ],
+        docsRouteBasePath: [
+          '/platform',
+          '/client',
+          '/participant',
+          ...repos.map((repo) => repo.route),
+        ],
       },
     ],
   ];
@@ -130,7 +159,7 @@ const config = {
     ],
   ],
 
-  plugins: [...docsPlugins, ...searchPlugin],
+  plugins: [...docsPlugins, ...guidePlugins, ...searchPlugin],
 
   themeConfig:
     /** @type {import('@docusaurus/preset-classic').ThemeConfig} */
@@ -149,14 +178,17 @@ const config = {
             position: 'left',
             items: repos.map((repo) => ({to: `${repo.route}/`, label: repo.label})),
           },
-          // Client and participant documentation is published on radar-base.org, not in a
-          // repository, so these entries link out. See src/data/externalDocs.js.
-          ...externalDocSections.map((section) => ({
-            type: 'dropdown',
-            label: section.title.replace(' documentation', ''),
-            position: 'left',
-            items: section.docs.map((doc) => ({href: doc.href, label: doc.label})),
-          })),
+          // The client and participant guides. See src/data/guides.js.
+          ...guideSections.map((section) =>
+            section.pages.length > 1
+              ? {
+                  type: 'dropdown',
+                  label: section.navLabel,
+                  position: 'left',
+                  items: section.pages.map((page) => ({to: page.to, label: page.label})),
+                }
+              : {to: section.route, label: section.navLabel, position: 'left'},
+          ),
           {to: '/platform/faq', label: 'FAQ', position: 'left'},
           // Shows the version picker for whichever component the reader is in.
           {type: 'custom-activeDocsVersionDropdown', position: 'right'},
@@ -174,12 +206,12 @@ const config = {
             ],
           },
           {
-            title: 'Clients and participants',
+            title: 'Guides',
             items: [
-              ...externalDocSections.flatMap((section) =>
-                section.docs.map((doc) => ({label: doc.label, href: doc.href})),
+              ...guideSections.flatMap((section) =>
+                section.pages.map((page) => ({label: page.label, to: page.to})),
               ),
-              ...platformDocs.map((doc) => ({label: doc.label, href: doc.href})),
+              ...platformGuides.map((page) => ({label: page.label, to: page.to})),
             ],
           },
           {

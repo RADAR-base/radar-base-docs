@@ -3,7 +3,8 @@ import Link from '@docusaurus/Link';
 import useBaseUrl from '@docusaurus/useBaseUrl';
 import useDocusaurusContext from '@docusaurus/useDocusaurusContext';
 import Layout from '@theme/Layout';
-import {EXTERNAL_HOST, externalDocSections} from '../data/externalDocs';
+
+import {guideSections} from '../data/guides';
 
 /**
  * The component list is whatever the last documentation fetch produced, so a repository
@@ -26,27 +27,21 @@ function ComponentCard({repo}) {
 }
 
 /**
- * Client and participant documentation lives on radar-base.org, so these cards leave the
- * site. The host is on the card, and the arrow marks the link, so that is not a surprise.
+ * A page in one of the guide sections. These read like the component cards, because they
+ * are the same kind of thing to a reader: a piece of documentation this site publishes.
  */
-function ExternalDocCard({doc}) {
+function GuideCard({page}) {
   return (
     <li>
-      <Link className="componentCard componentCard--external" to={doc.href}>
-        <h3 className="componentCard__title">
-          {doc.label}
-          <span className="componentCard__external" aria-hidden="true"> ↗</span>
-        </h3>
-        <p className="componentCard__description">{doc.description}</p>
-        <div className="componentCard__meta">
-          <span className="componentCard__badge">{EXTERNAL_HOST}</span>
-        </div>
+      <Link className="componentCard" to={page.to}>
+        <h3 className="componentCard__title">{page.label}</h3>
+        <p className="componentCard__description">{page.description}</p>
       </Link>
     </li>
   );
 }
 
-function ExternalDocSection({section}) {
+function GuideSection({section}) {
   return (
     <>
       <h2 className="margin-top--xl" id={section.id}>
@@ -54,8 +49,8 @@ function ExternalDocSection({section}) {
       </h2>
       <p className="sectionBlurb">{section.blurb}</p>
       <ul className="componentGrid">
-        {section.docs.map((doc) => (
-          <ExternalDocCard key={doc.href} doc={doc} />
+        {section.pages.map((page) => (
+          <GuideCard key={page.to} page={page} />
         ))}
       </ul>
     </>
@@ -113,8 +108,8 @@ export default function Home() {
           </ul>
         )}
 
-        {externalDocSections.map((section) => (
-          <ExternalDocSection key={section.id} section={section} />
+        {guideSections.map((section) => (
+          <GuideSection key={section.id} section={section} />
         ))}
 
         <h2 className="margin-top--xl">Questions and common issues</h2>

@@ -1,6 +1,6 @@
 ---
 title: FAQ and common issues
-sidebar_position: 2
+sidebar_position: 3
 ---
 
 # FAQ and common issues

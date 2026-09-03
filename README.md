@@ -3,14 +3,22 @@
 The documentation site for [RADAR-base](https://github.com/RADAR-base), published to
 GitHub Pages at <https://radar-base.github.io/radar-base-docs/>.
 
-Documentation is **not written here**. Each project's pages live in that project's own
-repository, next to the code they describe. This site fetches them at build time, so:
+Component documentation is **not written here**. Each component's pages live in that
+component's own repository, next to the code they describe. This site fetches them at build
+time, so:
 
 - maintainers decide what their project's documentation contains, in their own repository,
   reviewed in their own pull requests;
 - every tagged release gets its own published version of the documentation, and readers
   can switch between versions;
 - the site rebuilds itself when a project releases, when its docs change, and nightly.
+
+The exception is the material that does not belong to any one component — the platform
+overview and FAQ, and the client and participant guides in `content/client` and
+`content/participant`. Those pages are written and reviewed here. The guides were copied from
+[radar-base.org/docs](https://radar-base.org/docs/) on 3 September 2026, and each one ends with
+a line naming the page it came from, so a change made on either site can be carried to the
+other.
 
 ## Adding a repository
 
@@ -88,7 +96,9 @@ Everything the fetch step writes is generated output and is not committed: `docs
 | Path | Purpose |
 | --- | --- |
 | [`repos.yml`](repos.yml) | Which repositories are published, and where |
-| [`content/platform/`](content/platform/) | Cross-project documentation, written here |
+| [`content/platform/`](content/platform/) | Cross-component documentation, written here |
+| [`content/client/`](content/client/) | Client documentation — the apps and devices a study runs on |
+| [`content/participant/`](content/participant/) | Participant-facing guides |
 | [`scripts/fetch-docs.mjs`](scripts/fetch-docs.mjs) | Fetches and normalises each project's docs |
 | [`templates/`](templates/) | Files that project repositories copy into their own repo |
 | [`overrides/`](overrides/) | Optional stand-in manifest for a project that has not adopted one |
