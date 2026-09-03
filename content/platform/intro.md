@@ -8,23 +8,34 @@ RADAR-base is an open source platform for remote data collection in clinical stu
 mobile apps and wearables collect data from participants, a streaming backend ingests and
 processes it, and analysis tools turn it into research output.
 
-This site brings together the documentation for the individual RADAR-base projects. Each
-project's pages are published directly from its own repository, so what you read here is
+![RADAR-base logo](../../static/img/logo_large.png)
+
+This site brings together the documentation for the individual RADAR-base components. Each
+component's pages are published directly from its own repository, so what you read here is
 what its maintainers wrote alongside the code, at the version you select.
+
+:::note Alpha
+This documentation site is a work in progress. Components are still being added, and some
+sections are thinner than they will be. If something is missing or wrong, see the
+[FAQ and common issues](./faq.md) page for where to raise it.
+:::
 
 ## How this documentation is organised
 
-- **Platform** — cross-project material maintained in the
+- **Platform** — cross-component material maintained in the
   [radar-base-docs](https://github.com/RADAR-base/radar-base-docs) repository. This section.
-- **Projects** — one section per repository, each with its own version picker. Pages under a
-  released version match that release; the version labelled *Next* tracks the project's
+- **Components** — one section per repository, each with its own version picker. Pages under a
+  released version match that release; the version labelled *Next* tracks the component's
   default branch.
+- **[FAQ and common issues](./faq.md)** — where to ask questions, and the problems that come
+  up most often.
 
 ## Where to start
 
 If you are new to RADAR-base, the [RADAR-base website](https://radar-base.org) covers what the
 platform does and who uses it. If you are looking to analyse data that has already been
-collected, start with the RADAR Pipeline documentation from the **Projects** menu.
+collected, start with the RADAR Pipeline documentation from the **Components** menu. For
+anything you cannot find, the [FAQ](./faq.md) lists where RADAR-base questions get answered.
 
 ## Contributing documentation
 

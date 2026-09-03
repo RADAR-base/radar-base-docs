@@ -27,13 +27,24 @@
   padding: 4rem 0 3.5rem;
 }
 
+/* The wordmark is dark navy, so it needs a light panel to stay legible on the gradient. */
+.hero--radar .hero__logo {
+  display: block;
+  width: min(22rem, 80%);
+  height: auto;
+  margin: 0 auto 1.75rem;
+  padding: 1rem 1.5rem;
+  border-radius: var(--ifm-global-radius);
+  background: #0000
+}
+
 .hero--radar .hero__subtitle {
   max-width: 44rem;
   margin: 0 auto;
   opacity: 0.92;
 }
 
-.projectGrid {
+.componentGrid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(17rem, 1fr));
   gap: 1.25rem;
@@ -42,7 +53,7 @@
   list-style: none;
 }
 
-.projectCard {
+.componentCard {
   display: flex;
   flex-direction: column;
   height: 100%;
@@ -53,25 +64,25 @@
   transition: border-color 0.2s ease, transform 0.2s ease;
 }
 
-.projectCard:hover {
+.componentCard:hover {
   border-color: var(--ifm-color-primary);
   transform: translateY(-2px);
   text-decoration: none;
 }
 
-.projectCard__title {
+.componentCard__title {
   margin: 0 0 0.4rem;
   font-size: 1.15rem;
 }
 
-.projectCard__description {
+.componentCard__description {
   flex: 1;
   margin: 0 0 1rem;
   color: var(--ifm-color-emphasis-700);
   font-size: 0.94rem;
 }
 
-.projectCard__meta {
+.componentCard__meta {
   display: flex;
   flex-wrap: wrap;
   gap: 0.4rem;
@@ -79,7 +90,7 @@
   color: var(--ifm-color-emphasis-600);
 }
 
-.projectCard__badge {
+.componentCard__badge {
   padding: 0.1rem 0.5rem;
   border-radius: 999px;
   background: var(--ifm-color-emphasis-200);
@@ -90,4 +101,50 @@
   border: 1px dashed var(--ifm-color-emphasis-400);
   border-radius: var(--ifm-global-radius);
   color: var(--ifm-color-emphasis-700);
+}
+
+/**
+ * The site is published while it is still incomplete, so an "Alpha" marker sits in the
+ * navbar on every page and beside the heading on the home page.
+ */
+.alphaBadge {
+  display: inline-block;
+  padding: 0.05rem 0.45rem;
+  border: 1px solid var(--ifm-color-primary);
+  border-radius: 999px;
+  color: var(--ifm-color-primary);
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  line-height: 1.6;
+  white-space: nowrap;
+}
+
+/* On the hero gradient the primary blue has no contrast; use the panel colours instead. */
+.alphaBadge--onDark {
+  border-color: rgba(255, 255, 255, 0.7);
+  background: rgba(255, 255, 255, 0.16);
+  color: #fff;
+}
+
+.hero--radar .hero__status {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+  align-items: center;
+  justify-content: center;
+  max-width: 44rem;
+  margin: 0 auto 0.75rem;
+  font-size: 0.9rem;
+  opacity: 0.92;
+}
+
+.hero--radar .hero__statusText {
+  max-width: 34rem;
+}
+
+/* The navbar badge is a plain html item, so it needs its own vertical alignment. */
+.navbar__item .alphaBadge {
+  vertical-align: middle;
 }

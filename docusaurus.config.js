@@ -4,11 +4,11 @@ const path = require('node:path');
 const {themes} = require('prism-react-renderer');
 
 /**
- * One published project, as written to .generated/repos.json by scripts/fetch-docs.mjs.
+ * One published component, as written to .generated/repos.json by scripts/fetch-docs.mjs.
  *
  * @typedef {object} PublishedRepo
  * @property {string} id            Docs plugin instance id, e.g. "radarpipeline".
- * @property {string} label         Display name, from the project's own manifest.
+ * @property {string} label         Display name, from the component's own manifest.
  * @property {string} description   One-line summary shown on the home page.
  * @property {string} route         URL prefix, e.g. "/pipeline".
  * @property {string} repo          "owner/name" on GitHub.
@@ -21,8 +21,8 @@ const {themes} = require('prism-react-renderer');
  */
 
 /**
- * Every project's documentation section is generated from the results of
- * `npm run fetch-docs`, which writes .generated/repos.json. Adding a project to the
+ * Every component's documentation section is generated from the results of
+ * `npm run fetch-docs`, which writes .generated/repos.json. Adding a component to the
  * site means adding it to repos.yml — never editing this file.
  *
  * @returns {PublishedRepo[]}
@@ -44,7 +44,7 @@ const repos = loadGeneratedRepos();
 const url = process.env.SITE_URL ?? 'https://radar-base.github.io';
 const baseUrl = process.env.SITE_BASE_URL ?? '/radar-base-docs/';
 
-/** One docs plugin instance per project, each with its own versions. */
+/** One docs plugin instance per component, each with its own versions. */
 const docsPlugins = repos.map((repo) => [
   '@docusaurus/plugin-content-docs',
   {
@@ -92,7 +92,7 @@ const config = {
   organizationName: 'RADAR-base',
   projectName: 'radar-base-docs',
   // Every route becomes a directory with an index.html. Besides suiting GitHub Pages,
-  // this keeps a docs version that contains a single page (a project whose docs are
+  // this keeps a docs version that contains a single page (a component whose docs are
   // just its README) from rendering as a bare .html file with no directory, which the
   // search indexer cannot write into.
   trailingSlash: true,
@@ -108,7 +108,7 @@ const config = {
     hooks: {onBrokenMarkdownLinks: 'warn'},
   },
 
-  // Makes the fetched project list available to React components such as the home page.
+  // Makes the fetched component list available to React components such as the home page.
   customFields: {repos},
 
   presets: [
@@ -139,14 +139,17 @@ const config = {
         title: 'RADAR-base',
         logo: {alt: 'RADAR-base', src: 'img/logo.png'},
         items: [
+          // The site is incomplete and published anyway; the badge says so on every page.
+          {type: 'html', position: 'left', value: '<span class="alphaBadge">Alpha</span>'},
           {to: '/platform/', label: 'Platform', position: 'left'},
           {
             type: 'dropdown',
-            label: 'Projects',
+            label: 'Components',
             position: 'left',
             items: repos.map((repo) => ({to: `${repo.route}/`, label: repo.label})),
           },
-          // Shows the version picker for whichever project the reader is in.
+          {to: '/platform/faq', label: 'FAQ', position: 'left'},
+          // Shows the version picker for whichever component the reader is in.
           {type: 'custom-activeDocsVersionDropdown', position: 'right'},
           {href: 'https://github.com/RADAR-base', label: 'GitHub', position: 'right'},
         ],
@@ -159,6 +162,20 @@ const config = {
             items: [
               {label: 'Platform', to: '/platform/'},
               ...repos.map((repo) => ({label: repo.label, to: `${repo.route}/`})),
+            ],
+          },
+          {
+            title: 'Help',
+            items: [
+              {label: 'FAQ and common issues', to: '/platform/faq'},
+              {
+                label: 'GitHub Discussions',
+                href: 'https://github.com/orgs/RADAR-base/discussions',
+              },
+              {
+                label: 'Open an issue',
+                href: 'https://github.com/RADAR-base/radar-base-docs/issues',
+              },
             ],
           },
           {
