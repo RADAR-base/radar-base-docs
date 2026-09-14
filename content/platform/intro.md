@@ -27,30 +27,26 @@ sections are thinner than they will be. If something is missing or wrong, see th
 - **Components** — one section per repository, each with its own version picker. Pages under a
   released version match that release; the version labelled *Next* tracks the component's
   default branch.
-- **Client** and **Participant** — the apps, devices and participant-facing guides,
-  maintained on the [RADAR-base website](https://radar-base.org/docs/) and linked from the
-  navigation. See [Background reading](#background-reading) below.
+- **[Client](/client/)** and **[Participant](/participant/)** — the apps, devices and
+  participant-facing guides. These pages were copied from the RADAR-base website so they can
+  be read and searched alongside everything else here.
 - **[FAQ and common issues](./faq.md)** — where to ask questions, and the problems that come
   up most often.
 
 ## Background reading
 
-Higher-level material about the platform is published on the RADAR-base website rather than
-in a repository:
+[Concepts and components of RADAR-base](./concepts-and-components.md) is the place to start on
+how the platform fits together: the plugin-based architecture, the Kafka streaming core, and
+the role each component plays in it.
 
-- [Concepts and components of RADAR-base](https://radar-base.org/docs/concepts-and-components-of-radar-base/)
-  — how the platform fits together: the plugin-based architecture, the Kafka streaming core,
-  and the role each component plays in it.
-
-For running a study, the **Client** menu covers the
-[questionnaire (aRMT)](https://radar-base.org/docs/questionnaire-app/) and
-[passive (pRMT)](https://radar-base.org/docs/prmt-app/) apps, the
-[phone sensors](https://radar-base.org/docs/4048-2/) and
-[devices](https://radar-base.org/docs/supported-devices/) they collect from, and
-[authorising third-party wearable accounts](https://radar-base.org/docs/radar-rest-source-auth/).
-The **Participant** menu has the
-[user guide documents](https://radar-base.org/docs/user-guide-documents/) written for study
-participants.
+For running a study, the **Client** section covers the
+[questionnaire (aRMT)](/client/questionnaire-app) and [passive (pRMT)](/client/passive-app)
+apps, the [phone sensors](/client/phone-data-sensors) and
+[devices](/client/supported-devices) they collect from, and
+[authorising third-party wearable accounts](/client/rest-source-auth). The **Participant**
+section has the guides written for study participants: the
+[active app guide](/participant/active-app-user-guide) and the
+[wearable guide](/participant/wearable-user-guides).
 
 ## Where to start
 

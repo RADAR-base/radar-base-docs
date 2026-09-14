@@ -155,12 +155,60 @@
   color: var(--ifm-color-emphasis-700);
 }
 
-/* Cards that leave the site read as links, not as another documentation section. */
-.componentCard--external {
-  border-style: dashed;
+/**
+ * The client and participant pages were copied from a site whose layout sized their images
+ * for it: portrait phone screenshots, and guide covers shown as thumbnails. Cap them here so
+ * a page does not turn into a column of full-width images. Component documentation is left
+ * alone — those pages size their own images.
+ */
+.plugin-id-client .markdown img,
+.plugin-id-participant .markdown img {
+  max-height: 26rem;
+  width: auto;
+  border-radius: var(--ifm-global-radius);
 }
 
-.componentCard__external {
-  font-size: 0.85em;
-  opacity: 0.7;
+/* Cover art for a downloadable guide is a thumbnail, not an illustration. */
+.plugin-id-participant .markdown a > img {
+  max-height: 18rem;
+}
+
+/**
+ * The participant guides are Canva designs, embedded so they can be read without leaving
+ * the page. The source markup sized each frame with inline styles and a padding-top ratio
+ * hack; a class keeps the markdown readable and the two guides identical. Both designs are
+ * A4 portrait, which is what the ratio below describes.
+ */
+.canvaEmbed {
+  position: relative;
+  width: 100%;
+  max-width: 44rem;
+  aspect-ratio: 1 / 1.4142;
+  margin: 1.6rem 0 0.9rem;
+  overflow: hidden;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px 0 rgba(63, 69, 81, 0.16);
+  /* Visible while the embed loads, and if a privacy extension blocks it outright. */
+  background: var(--ifm-color-emphasis-200);
+}
+
+.canvaEmbed iframe {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  padding: 0;
+  border: none;
+}
+
+/* The embed is not always available, and the design reads better full screen on a phone. */
+.embedCaption {
+  max-width: 44rem;
+  font-size: 0.9rem;
+  color: var(--ifm-color-emphasis-700);
+}
+
+.embedCaption p {
+  margin-bottom: 0;
 }
